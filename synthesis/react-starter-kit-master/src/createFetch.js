@@ -9,7 +9,7 @@
 
 /* @flow */
 
-//flow的静态类型检测
+//flow的静态类型检测。
 type Fetch = (url: string, options: ?any) => Promise<any>;
 
 type Options = {
