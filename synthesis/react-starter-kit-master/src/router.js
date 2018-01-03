@@ -8,7 +8,7 @@
  */
 
 import UniversalRouter from 'universal-router';
-import routes from './routes';
+import routes from './routes'; // 配置路径以及对应加载的组件
 
 export default new UniversalRouter(routes, {
   resolveRoute(context, params) {

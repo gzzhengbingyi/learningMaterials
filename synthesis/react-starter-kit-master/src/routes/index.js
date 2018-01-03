@@ -17,7 +17,7 @@ const routes = {
   children: [
     {
       path: '',
-      load: () => import(/* webpackChunkName: 'home' */ './home'),
+      load: () => import(/* webpackChunkName: 'home' */ './home'), // 动态导入模块，按需加载
     },
     {
       path: '/contact',

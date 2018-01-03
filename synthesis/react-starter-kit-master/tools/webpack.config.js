@@ -45,7 +45,7 @@ const config = {
     publicPath: '/assets/',
     pathinfo: isVerbose,
     filename: isDebug ? '[name].js' : '[name].[chunkhash:8].js',
-    chunkFilename: isDebug
+    chunkFilename: isDebug // 动态导入
       ? '[name].chunk.js'
       : '[name].[chunkhash:8].chunk.js',
     // Point sourcemap entries to original disk location (format as URL on Windows)
