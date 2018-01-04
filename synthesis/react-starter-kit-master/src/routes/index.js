@@ -11,7 +11,7 @@
 
 // The top-level (parent) route
 const routes = {
-  path: '',
+  path: '', // 根目录
 
   // Keep in mind, routes are evaluated in order
   children: [
@@ -20,7 +20,7 @@ const routes = {
       load: () => import(/* webpackChunkName: 'home' */ './home'), // 动态导入模块，按需加载
     },
     {
-      path: '/contact',
+      path: '/contact', // 子目录
       load: () => import(/* webpackChunkName: 'contact' */ './contact'),
     },
     {
@@ -47,17 +47,17 @@ const routes = {
     // Wildcard routes, e.g. { path: '(.*)', ... } (must go last)
     {
       path: '(.*)',
-      load: () => import(/* webpackChunkName: 'not-found' */ './not-found'),
+      load: () => import(/* webpackChunkName: 'not-found' */ './not-found'), // 404
     },
   ],
 
   async action({ next }) {
     // Execute each child route until one of them return the result
-    const route = await next();
+    const route = await next(); // 中间件处理，目测对应的是子load的action。一般子都有action的，但这里用了load的方式
 
     // Provide default values for title, description etc.
     route.title = `${route.title || 'Untitled Page'} - www.reactstarterkit.com`;
-    route.description = route.description || '';
+    route.description = route.description || ''; // 来自对应目录index.js
 
     return route;
   },

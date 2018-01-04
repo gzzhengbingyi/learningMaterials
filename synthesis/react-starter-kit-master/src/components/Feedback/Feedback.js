@@ -10,8 +10,6 @@
 import React from 'react';
 import withStyles from 'isomorphic-style-loader/lib/withStyles';
 import s from './Feedback.css';
-//Link组件是必须包含children节点的，也就是普通a的高级版
-//这里并不需要
 
 class Feedback extends React.Component {
   render() {
