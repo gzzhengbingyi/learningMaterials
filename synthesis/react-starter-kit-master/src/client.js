@@ -49,7 +49,7 @@ const context = {
   }),
 };
 
-const container = document.getElementById('app'); //html.js
+const container = document.getElementById('app'); //html.js,server.js调用生成
 let currentLocation = history.location;
 let appInstance;
 
