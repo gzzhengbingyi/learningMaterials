@@ -10,6 +10,7 @@
  //同构，其他路由切换则是单页
 
 //fetch的polyfill实现，例如isomorphic-fetch和whatwg-fetch
+//master更新内容
 import 'whatwg-fetch';
 import React from 'react';
 import ReactDOM from 'react-dom';
