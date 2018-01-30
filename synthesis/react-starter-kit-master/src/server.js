@@ -11,13 +11,13 @@ import path from 'path';
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import bodyParser from 'body-parser';
-import expressJwt, { UnauthorizedError as Jwt401Error } from 'express-jwt';
+import expressJwt, { UnauthorizedError as Jwt401Error } from 'express-jwt'; // 用于保护接口，下面的jsonwebtoken生成token给客户端，服务端根据token验证是否合法
 import expressGraphQL from 'express-graphql';
-import jwt from 'jsonwebtoken';
-import fetch from 'node-fetch';
+import jwt from 'jsonwebtoken'; // 生成token
+import fetch from 'node-fetch'; // 基于fetch语法，用http实现的方法
 import React from 'react';
-import ReactDOM from 'react-dom/server';
-import PrettyError from 'pretty-error';
+import ReactDOM from 'react-dom/server'; // 服务端渲染
+import PrettyError from 'pretty-error'; // 终端输出错误更加直观
 import App from './components/App';
 import Html from './components/Html';
 import { ErrorPageWithoutStyle } from './routes/error/ErrorPage';
