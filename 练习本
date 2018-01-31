@@ -1,34 +1,25 @@
 练习本
 
-跨域：
-1、iframe代理
-hash变化
-window.name
-html5的postMessage
-domain调整(父子域)
+http方法：
+get
+post
+put
+delete
+head，只发头部，用于检测资源是否存在
+trace，跟踪
+option
 
-2、cors
-3、jsonp
-4、websocket
-5、commet
-6、服务器推送
-7、服务器代理
+AJAX
+var xhr = new XMLHttpRequest(); //0
+xhr.addEventListener("readystatechange", function(cb){
+	if(xhr.readyState == 4){
+		if(xhr.status >= 200 && xhr.status < 300 || xhr.status == 304){
+			cb(xhr.responseText)
+		}
+	}
+});
+xhr.open("get", "xxx.json", true); //1
+xhr.setRequestHeader('Content-type', 'xxxx'); //2
+xhr.send()
 
-http的code
-200，成功
-204，成功但没有返回东西
-206，返回部分
-
-301，永久重定向
-302，临时重定向
-303，类似于302，但是要求是get
-304，没变化
-307，类似于302，强制post
-
-400，语法错误
-401，未授权
-403，forbidden
-404，找不到
-
-500，服务器问题
-503，暂时繁忙
+//status == 3 开始接收
