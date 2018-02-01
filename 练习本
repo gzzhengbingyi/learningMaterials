@@ -1,25 +1,17 @@
 练习本
 
-http方法：
-get
-post
-put
-delete
-head，只发头部，用于检测资源是否存在
-trace，跟踪
-option
+事件
+标准事件流程分为事件捕获和事件冒泡
+elem.addEventListener(eventName, fn, 是否捕获)
+ie attachEvent
+阻止冒泡，stopPropagation，ie cancelBubble
+阻止默认事件，preventDefault
+ie阻止默认事件，return false
 
-AJAX
-var xhr = new XMLHttpRequest(); //0
-xhr.addEventListener("readystatechange", function(cb){
-	if(xhr.readyState == 4){
-		if(xhr.status >= 200 && xhr.status < 300 || xhr.status == 304){
-			cb(xhr.responseText)
-		}
-	}
-});
-xhr.open("get", "xxx.json", true); //1
-xhr.setRequestHeader('Content-type', 'xxxx'); //2
-xhr.send()
+触摸事件
+touchStart
+touchMove
+touchEnd
+touchCancel
 
-//status == 3 开始接收
+target，currentTarget
