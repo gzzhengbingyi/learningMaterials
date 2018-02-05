@@ -1,17 +1,24 @@
 练习本
 
-事件
-标准事件流程分为事件捕获和事件冒泡
-elem.addEventListener(eventName, fn, 是否捕获)
-ie attachEvent
-阻止冒泡，stopPropagation，ie cancelBubble
-阻止默认事件，preventDefault
-ie阻止默认事件，return false
+http1.0与http1.1区别
+长链接
+新的错误码
+部分资源加载
+新的缓存头部
+host头处理
 
-触摸事件
-touchStart
-touchMove
-touchEnd
-touchCancel
+spdy与http1.1区别
+基于https
+多路复用
+优先级设置
+服务器推送
+压缩header
 
-target，currentTarget
+http2与spdy区别
+压缩算法不一样
+http2无需https化
+
+https与http的区别
+https需要证书
+https防劫持
+https的链接方式不一样，端口也不一样(443)
