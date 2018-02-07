@@ -1,24 +1,13 @@
 练习本
 
-http1.0与http1.1区别
-长链接
-新的错误码
-部分资源加载
-新的缓存头部
-host头处理
+数组哪些操作不会修改原数组
+a.splice(start[,end])
+a.join()
+a.concat(b,c)
+a.map(cb)
+a.reduce(cb)
 
-spdy与http1.1区别
-基于https
-多路复用
-优先级设置
-服务器推送
-压缩header
-
-http2与spdy区别
-压缩算法不一样
-http2无需https化
-
-https与http的区别
-https需要证书
-https防劫持
-https的链接方式不一样，端口也不一样(443)
+字符串操作对比
+str.substring(begin[,end])
+str.slice(begin, [end]) 可以是-1
+str.substr(begin[,length])
