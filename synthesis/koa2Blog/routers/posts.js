@@ -1,11 +1,11 @@
 const router = require('koa-router')();
 const userModel = require('../lib/mysql.js')
-const moment = require('moment')
+const moment = require('moment') //日期处理库
 const checkNotLogin = require('../middlewares/check.js').checkNotLogin
 const checkLogin = require('../middlewares/check.js').checkLogin;
 const md = require('markdown-it')();  
 // 重置到文章页
-router.get('/', async(ctx, next) => {
+router.get('/', async(ctx, next) => { //koa的中间件就是generator类型的函数，由koa运行中间件的实现方式所决定
     ctx.redirect('/posts')
 })
 // 文章页
@@ -114,7 +114,7 @@ router.get('/create', async(ctx, next) => {
 })
 
 // post 发表文章
-router.post('/create', async(ctx, next) => {
+router.post('/create', async(ctx, next) => {//存储失败是因为编码问题，默认不是utf8，要设置mysql设置，然后删除库nodesql再创建
     let title = ctx.request.body.title,
         content = ctx.request.body.content,
         id = ctx.session.id,

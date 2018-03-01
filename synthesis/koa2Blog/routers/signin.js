@@ -1,11 +1,12 @@
 const router = require('koa-router')();
-const userModel = require('../lib/mysql.js')
+const userModel = require('../lib/mysql.js');//mysql操作api
 const md5 = require('md5')
-const checkNotLogin = require('../middlewares/check.js').checkNotLogin
+const checkNotLogin = require('../middlewares/check.js').checkNotLogin; //自定义中间件方法
 const checkLogin = require('../middlewares/check.js').checkLogin
 
+//匹配注册路径，将请求上下文传入中间件
 router.get('/signin', async(ctx, next) => {
-    await checkNotLogin(ctx)
+    await checkNotLogin(ctx) //假如这个异步操作通过，就跑下面的语句
     await ctx.render('signin', {
         session: ctx.session,
     })
