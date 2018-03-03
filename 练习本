@@ -1,13 +1,168 @@
 练习本
 
-数组哪些操作不会修改原数组
-a.splice(start[,end])
-a.join()
-a.concat(b,c)
-a.map(cb)
-a.reduce(cb)
+手写一个promise
+function Promise(executor){
+	var self = this;
 
-字符串操作对比
-str.substring(begin[,end])
-str.slice(begin, [end]) 可以是-1
-str.substr(begin[,length])
+	self.status = "pending";
+	self.onResolvedCallback = [];
+	self.onRejectedCallback = [];
+
+	function resolve(value){
+		if(value instanceof Promise){
+			return value.then(resolve, reject)
+		}
+		setTimeout(function(){
+			if(self.status === 'pending'){
+				self.status = 'resolved';
+				self.data = value;
+				for(var i = 0; i < self.onResolvedCallback.length; i++){
+					self.onResolvedCallback[i](value)
+				}
+			}
+		})
+	}
+
+	function reject(reason){
+		setTimeout(function(){
+			if(self.status === 'pending'){
+				self.status = 'rejected';
+				self.data = reason;
+				for(var i = 0; i < self.onRejectedCallback.length; i++){
+					self.onRejectedCallback[i](reason)
+				}
+			}
+		}）
+	}
+
+	try{
+		executor(resolve, reject);
+	} catch(e){
+		reject(e)
+	}
+}
+
+//resolvePromise函数即为根据x的值来决定promise2的状态的函数
+function resolvePromise(promise2, x, resolve, reject){
+	var then
+	var thenCalledOrThrow = false;
+
+	if(promise2 === x){
+		return rejecte(new TypeError('Chaining cycle detected for promise!'))
+	}
+
+	if(x instanceof Promise){
+		if(x.status === 'pending'){
+			x.then(function(v){
+				resolvePromise(promise2, v, resolve, reject)
+			}, reject)
+		} else{
+			x.then(resolve, reject)
+		}
+		return
+	}
+
+	//不同实现的promise也可以保证能够互相调用
+	if((x !=== null) && ((typeof x === "object") || typeof x === "function")){
+		try{
+			then = x.then;
+			if(typeof then === "function"){
+				then.call(x, function rs(y){
+					if(thenCalledOrThrow) return
+					thenCalledOrThrow = true
+					return resolvePromise(promise2, y, resolve, reject)
+				}, function rj(r){
+					if(thenCalledOrThrow) return
+					thenCalledOrThrow = true
+					return reject(r)
+				})
+			} else{
+				resolve(x)
+			}
+		} catch(e){
+			if(thenCalledOrThrow) return
+			thenCalledOrThrow = true
+			return reject(e)
+		}
+	} else{
+		resolve(x)
+	}
+}
+
+Promise.prototype.then = function(onResolved, onRejected){
+	var selt = this;
+	var promise2;
+
+	onResolved = typeof onResolved === 'function' ? onResolved : function(value){return value};//解决值穿透问题
+	onRejected = typeof onRejected === 'function' ? onRejected : function(reason) {throw reason};
+
+	if(self.status === "resolved"){//前一个promise异步完成并调用resolve
+		return promise2 = new Promise(function(resolve, reject){
+			setTimeout(function(){
+				try{
+					var x = onResolved(self.data);
+					// if(x instanceof Promise){
+					// 	x.then(resolve, reject);
+					// }
+					// resolve(x);
+					resolvePromise(promise2, x, resolve, reject)
+				} catch(e){
+					rejecte(e)
+				}
+			})
+		})
+	}
+
+	if(self.status === "rejected"){//前一个promise异步完成并调用reject
+		return promise2 = new Promise(function(resolve, reject){
+			setTimeout(function(){
+				try{
+					var x = onRejected(self.data);
+					resolvePromise(promise2, x, resolve, reject)
+				} catch(e){
+					rejecte(e)
+				}
+			})
+		});
+	}
+
+	if(self.status === "pending"){//假如前一个promise还没异步完
+		return promise2 = new Promise((function(resolve, reject){
+			//没有异步完成，所以处理可以push到前一个promise的回调函数里面
+			self.onResolvedCallback.push(function(value){
+				try{
+					var x = onResolved(self.data);
+					resolvePromise(promise2, x, resolve, reject)
+				} catch(e){
+					reject(e)
+				}
+			})
+
+			self.onRejectedCallback.push(function(value){
+				try{
+					var x = onRejected(self.data);
+					resolvePromise(promise2, x, resolve, reject)
+				} catch(e){
+					reject(e)
+				}
+			})
+		}))
+	}
+}
+
+Promise.prototype.catch = function(onRejected){
+	return this.then(null, onRejected)
+}
+
+Promise.deferred = Promise.defer = function(){
+	var dfd = {}
+	dfd.promise = new Promise(function(resolve, reject){
+		dfd.resolve = resolve
+		dfd.reject = reject
+	})
+	return dfd
+}
+
+Promise.cancel = Promise.stop = function() {
+  	return new Promise(function(){})
+}
