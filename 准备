@@ -63,9 +63,60 @@ c、html5 新出的`window.postMessage`，根据`event.origin`来保证只对特
 
 ### ajax
 
+```
+var callback = function(res){
+}
+var xhr = new XMLHttpRequest();
+xhr.onreadystatechange = function(){
+	if(xhr.readyState === 4){
+		if((xhr.status >= 200 && xhr.status < 300) || xhr.status === 304)){
+			callback(xhr.responseText)
+		} else{
+		}
+	}
+}
+xhr.open('get','xxx.json')
+xhr.setRequestHeader("myHeader", "myValue");
+xhr.send(null);
+```
+
 ### 优化
 
-### 安全（XSS、CSRF等）
+### OOP
+
+```
+类继承
+function classA(){
+}
+classA.method = function(){
+}
+classA.prototype.api = function(){
+}
+
+function classB(){
+	classA.apply(this, arguments) //调用constructor方法，注意不是new，所以不是classA的实例
+}
+classB.prototype = new ClassA(); //假如是classA的prototype，就不能重写一些方法了
+classB.prototype.constuctor = classB; //这个关系的一定的，不重写这里就是classA了.构造器属性是构造函数自身的
+classB.prototype.api = function(){
+	classA.prototype.api.apply(this, arguments)
+}
+
+
+原型继承
+var proto = {
+	action1: function(){},
+	action2: function(){}
+}
+var obj = Object.create(proto)
+
+旧版的实现就是
+Object.create = Object.create || function(obj){
+	var F = fucntion(){}
+	F.prototype = obj; //通过new返回能隔离一层，用于重写
+	return new F();
+}
+```
 
 ### CSS应用
 
@@ -539,3 +590,515 @@ css:
 实现：
 
 1、`Content-Security-Policy:`设置白名单
+
+### 数据变更检测以及虚拟 DOM 原理
+
+#### 1. 脏检测
+
+```
+HTML
+<input qg-event="value" qg-bind="value" type="text" id="input">
+<span qg-event="text" qg-bind="value" id="el"></span>
+
+JS
+let elems = [byId("el"), byId("input")];
+let data = {
+	value: "hello"
+}
+
+let directive = {
+	text: function(text){
+		this.innerHTML = text
+	},
+	value: function(value){
+		this.setAttribute('value', value)
+	}
+}
+
+function san(elems){
+	for(let elem of elems){
+		elem.direactive = []
+	}
+}
+
+elems[1].addEventListener("keyup", function(e){
+	data.value = e.target.value;
+	$digest(e.target.getAttribute("qg-bind")); //bind定的参数
+})
+
+function $degest(value){
+	let list = querySelectorAll('[qg-bind=' + value + '']');
+	digest(list)
+}
+
+function digest(elems){
+	for(let i = 0, len = elems.length; i < len; i++){
+		let elem = elems[i];
+		for(let j = 0, len1 = elem.attributes.length; j < len1;j++){
+			let attr = elem.attributes[j];
+			if(attr.nodeName.indexOf("qg-event") >= 0){
+				let datakey = elem.getAtrribute("qg-bind") || undefine;
+				if(elem.directive[attr.nodeValue] !== data[datakey]){
+					directive[attr.nodeValue].call(elem, data[datakey]);
+					elem.directive(attr.nodeValue) = data[datakey]
+				}
+			}
+		}
+	}
+}
+```
+
+#### 2. 数据劫持，defineObjectProperty
+
+```
+let bValue;
+function defineGetAndSet(obj, propName){
+	Object.defineProperty(obj, propName){
+		get: function(){
+			return bValue;
+		},
+		set: function(newValue){
+			bValue = newValue;
+			scan();
+		},
+		enumerable: true, //enumerable定义了对象的属性是否可以在 for...in 循环和 Object.keys() 中被枚举。
+
+		configurable: true //configurable特性表示对象的属性是否可以被删除，以及除writable特性外的其他特性是否可以被修改。
+	}
+}
+
+function scan(){
+	for(let elem of elems){
+		elem.directive = [];
+		for(let attr of elem.attributes){
+			if(attr.nodeName.indexOf("q-")){
+				directive[attr.nodeName.slice(2)].call(elem, 				data[attr.nodeValue]);
+				elem.directive.push(attr.nodeName.slice(2))
+			}
+		}
+	}
+}
+
+elems[1].addEventlistner(keyup){
+	data.value = e.target.value
+}
+defineGetAndSet(data, "value");
+```
+
+#### 3. ES6 的 Proxy
+
+```
+let data = new Proxy({}, {
+	get: function(target, key, receiver){
+		return target.value
+	},
+	set: function(target, key, value, recevier){
+		target.value = value;
+		scan();
+		return target.value;
+	}
+})
+
+data["value"] = "hello"
+```
+
+#### 4. 虚拟 dom 原理
+
+先生存 AST 抽象语法树，dom 变化是进行多叉树结构遍历，默认进行同级元素进行对比，通过绑定 key 来实现插入或者移动操作，避免同级元素对比时候销毁并创建原有节点。
+
+### 手写 Promise 的实现
+
+```
+unction Promise(executor){
+	var self = this;
+
+	self.status = "pending";
+	self.onResolvedCallback = [];
+	self.onRejectedCallback = [];
+
+	function resolve(value){
+		if(value instanceof Promise){
+			return value.then(resolve, reject)
+		}
+		setTimeout(function(){
+			if(self.status === 'pending'){
+				self.status = 'resolved';
+				self.data = value;
+				for(var i = 0; i < self.onResolvedCallback.length; i++){
+					self.onResolvedCallback[i](value)
+				}
+			}
+		})
+	}
+
+	function reject(reason){
+		setTimeout(function(){
+			if(self.status === 'pending'){
+				self.status = 'rejected';
+				self.data = reason;
+				for(var i = 0; i < self.onRejectedCallback.length; i++){
+					self.onRejectedCallback[i](reason)
+				}
+			}
+		}）
+	}
+
+	try{
+		executor(resolve, reject);
+	} catch(e){
+		reject(e)
+	}
+}
+
+//resolvePromise函数即为根据x的值来决定promise2的状态的函数
+function resolvePromise(promise2, x, resolve, reject){
+	var then
+	var thenCalledOrThrow = false;
+
+	if(promise2 === x){
+		return rejecte(new TypeError('Chaining cycle detected for promise!'))
+	}
+
+	if(x instanceof Promise){
+		if(x.status === 'pending'){
+			x.then(function(v){
+				resolvePromise(promise2, v, resolve, reject)
+			}, reject)
+		} else{
+			x.then(resolve, reject)
+		}
+		return
+	}
+
+	//不同实现的promise也可以保证能够互相调用
+	if((x !=== null) && ((typeof x === "object") || typeof x === "function")){
+		try{
+			then = x.then;
+			if(typeof then === "function"){
+				then.call(x, function rs(y){
+					if(thenCalledOrThrow) return
+					thenCalledOrThrow = true
+					return resolvePromise(promise2, y, resolve, reject)
+				}, function rj(r){
+					if(thenCalledOrThrow) return
+					thenCalledOrThrow = true
+					return reject(r)
+				})
+			} else{
+				resolve(x)
+			}
+		} catch(e){
+			if(thenCalledOrThrow) return
+			thenCalledOrThrow = true
+			return reject(e)
+		}
+	} else{
+		resolve(x)
+	}
+}
+
+Promise.prototype.then = function(onResolved, onRejected){
+	var selt = this;
+	var promise2;
+
+	onResolved = typeof onResolved === 'function' ? onResolved : function(value){return value};//解决值穿透问题
+	onRejected = typeof onRejected === 'function' ? onRejected : function(reason) {throw reason};
+
+	if(self.status === "resolved"){//前一个promise异步完成并调用resolve
+		return promise2 = new Promise(function(resolve, reject){
+			setTimeout(function(){
+				try{
+					var x = onResolved(self.data);
+					// if(x instanceof Promise){
+					// 	x.then(resolve, reject);
+					// }
+					// resolve(x);
+					resolvePromise(promise2, x, resolve, reject)
+				} catch(e){
+					rejecte(e)
+				}
+			})
+		})
+	}
+
+	if(self.status === "rejected"){//前一个promise异步完成并调用reject
+		return promise2 = new Promise(function(resolve, reject){
+			setTimeout(function(){
+				try{
+					var x = onRejected(self.data);
+					resolvePromise(promise2, x, resolve, reject)
+				} catch(e){
+					rejecte(e)
+				}
+			})
+		});
+	}
+
+	if(self.status === "pending"){//假如前一个promise还没异步完
+		return promise2 = new Promise((function(resolve, reject){
+			//没有异步完成，所以处理可以push到前一个promise的回调函数里面
+			self.onResolvedCallback.push(function(value){
+				try{
+					var x = onResolved(self.data);
+					resolvePromise(promise2, x, resolve, reject)
+				} catch(e){
+					reject(e)
+				}
+			})
+
+			self.onRejectedCallback.push(function(value){
+				try{
+					var x = onRejected(self.data);
+					resolvePromise(promise2, x, resolve, reject)
+				} catch(e){
+					reject(e)
+				}
+			})
+		}))
+	}
+}
+
+Promise.prototype.catch = function(onRejected){
+	return this.then(null, onRejected)
+}
+
+Promise.deferred = Promise.defer = function(){
+	var dfd = {}
+	dfd.promise = new Promise(function(resolve, reject){
+		dfd.resolve = resolve
+		dfd.reject = reject
+	})
+	return dfd
+}
+
+Promise.cancel = Promise.stop = function() {
+  	return new Promise(function(){})
+}
+```
+
+### co 的简单实现
+
+```
+funtion co(fn){
+	return function(done){
+		let ctx = this;
+		let fn = fn.call(ctx);
+		let it = null;
+
+		function _next(err, res){
+			if(err) res = err;//第二次next的时候，其实就是回调函数返回异步的结果，然后用next赋值
+			it = fn.next(res);//value是thunk函数(新的版本是promise)
+			if(!it.done){
+				it.value(_next) //相当于_next为回调函数，其实没有co的话，就是靠回调运行next的
+		}
+		_next()
+	}
+}
+```
+
+### 手写一个组件
+
+```
+var emitter = {
+  // 注册事件
+  on: function(event, fn) {
+    var handles = this._handles || (this._handles = {}),
+      calls = handles[event] || (handles[event] = []);
+
+    // 找到对应名字的栈
+    calls.push(fn);
+
+    return this;
+  },
+  // 解绑事件
+  off: function(event, fn) {
+    if(!event || !this._handles) this._handles = {};
+    if(!this._handles) return;
+
+    var handles = this._handles , calls;
+
+    if (calls = handles[event]) {
+      if (!fn) {
+        handles[event] = [];
+        return this;
+      }
+      // 找到栈内对应listener 并移除
+      for (var i = 0, len = calls.length; i < len; i++) {
+        if (fn === calls[i]) {
+          calls.splice(i, 1);
+          return this;
+        }
+      }
+    }
+    return this;
+  },
+  // 触发事件
+  emit: function(event){
+    var args = [].slice.call(arguments, 1),
+      handles = this._handles, calls;
+
+    if (!handles || !(calls = handles[event])) return this;
+    // 触发所有对应名字的listeners
+    for (var i = 0, len = calls.length; i < len; i++) {
+      calls[i].apply(this, args)
+    }
+    return this;
+  }
+}
+
+!function(){
+  // 帮助函数
+  // ----------
+
+  // 将HTML转换为节点
+  function html2node(str){
+    var container = document.createElement('div');
+    container.innerHTML = str;
+    return container.children[0];
+  }
+
+  // 赋值属性
+  // extend({a:1}, {b:1, a:2}) -> {a:1, b:1}
+  function extend(o1, o2){
+    for(var i in o2) if(typeof o1[i] === 'undefined'){
+      o1[i] = o2[i]
+    } 
+    return o1
+  }
+
+
+
+
+  // Modal
+  // -------
+
+  var template = 
+  '<div class="m-modal">\
+    <div class="modal_align"></div>\
+    <div class="modal_wrap animated">\
+      <div class="modal_head">标题</div>\
+      <div class="modal_body">内容</div>\
+      <div class="modal_foot">\
+        <a class="confirm" href="#">确认</a>\
+        <a class="cancel" href="#">取消</a>\
+      </div>\
+    </div>\
+  </div>';
+
+
+
+
+
+  function Modal(options){
+    options = options || {};
+    // 即 div.m-modal 节点
+    this.container = this._layout.cloneNode(true);
+    // body 用于插入自定义内容
+    this.body = this.container.querySelector('.modal_body');
+    // 窗体节点，在应用动画时有用
+    this.wrap = this.container.querySelector('.modal_wrap');
+
+    // 将options 复制到 组件实例上
+    extend(this, options);
+
+
+    this._initEvent();
+
+  }
+
+
+
+  extend(Modal.prototype, {
+
+    _layout: html2node(template),
+
+    setContent: function(content){
+      if(!content) return;
+
+      //支持两种字符串结构和DOM节点
+      if(content.nodeType === 1){ 
+
+        this.body.innerHTML = 0;
+        this.body.appendChild(content);
+
+      }else{
+
+        this.body.innerHTML = content;
+      }
+    },
+
+    // 显示弹窗
+    show: function(content){
+      
+      if(content) this.setContent(content);
+
+      document.body.appendChild(this.container);
+      animateClass(this.wrap, this.animation.enter)
+
+
+    },
+
+    hide: function(){
+
+      var container = this.container;
+
+      animateClass(this.wrap, this.animation.leave, function(){
+        document.body.removeChild(container);
+      })
+      
+    },
+
+
+
+    // 初始化事件
+    _initEvent: function(){
+
+      this.container.querySelector('.confirm').addEventListener(
+        'click', this._onConfirm.bind(this)
+      )
+      this.container.querySelector('.cancel').addEventListener(
+        'click', this._onCancel.bind(this)
+      )
+    },
+
+    _onConfirm: function(){
+      this.emit('confirm')
+      this.hide();
+    },
+
+    _onCancel: function(){
+      this.emit('cancel')
+      this.hide();
+    }
+
+  })
+
+
+  // 使用混入Mixin的方式使得Slider具有事件发射器功能
+  extend(Modal.prototype, emitter);
+  
+
+
+
+
+
+
+  //          5.Exports
+  // ----------------------------------------------------------------------
+  // 暴露API:  Amd || Commonjs  || Global 
+  // 支持commonjs
+  if (typeof exports === 'object') {
+    module.exports = Modal;
+    // 支持amd
+  } else if (typeof define === 'function' && define.amd) {
+    define(function() {
+      return Modal
+    });
+  } else {
+    // 直接暴露到全局
+    window.Modal = Modal;
+  }
+
+
+}()
+```
