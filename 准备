@@ -69,6 +69,201 @@ c、html5 新出的`window.postMessage`，根据`event.origin`来保证只对特
 
 ### CSS应用
 
+#### 1. 水平居中
+
+```
+html:
+
+<div class="parent">
+	<div class="child"></div>
+</div>
+
+css:
+
+.parent{
+	text-align: center;
+}
+
+.child{
+	display: inline-block;
+}
+```
+
+```
+html:
+
+<div class="parent">
+	<div class="child"></div>
+</div>
+
+css:
+
+.child{
+	display: table;
+	margin: 0 auto;
+}
+```
+
+```
+html:
+
+<div class="parent">
+	<div class="child"></div>
+</div>
+
+css:
+
+.parent{
+	position: relative;
+}
+
+.child{
+	position: absolute;
+	left: 50%;
+	transform: translateX(-50%);
+}
+```
+
+```
+html:
+
+<div class="parent">
+	<div class="child"></div>
+</div>
+
+css:
+
+.parent{
+	display: flex;
+	justifiy-content: center;
+}
+
+------
+
+.parent{
+	display: flex;
+}
+
+.child{
+	margin: 0 auto;
+}
+```
+
+#### 2. 垂直居中
+
+```
+html:
+
+<div class="parent">
+	<div class="child"></div>
+</div>
+
+css:
+
+.parent{
+	display: table-cell;
+	vertical-align: middle;
+}
+```
+
+
+```
+html:
+
+<div class="parent">
+	<div class="child"></div>
+</div>
+
+css:
+
+.parent{
+	position: relative;
+}
+
+.child{
+	position: absolute;
+	top: 50%;
+	transform: translateY(-50%);
+}
+```
+
+
+```
+html:
+
+<div class="parent">
+	<div class="child"></div>
+</div>
+
+css:
+
+.parent{
+	display: flex;
+	align-items: center;
+}
+```
+
+#### 3. 垂直水平居中
+
+
+```
+html:
+
+<div class="parent">
+	<div class="child"></div>
+</div>
+
+css:
+
+.parent{
+	text-align: center;
+	display: table-cell;
+	vertical-align: middle;
+}
+
+.child{
+	display: inline-block;
+}
+```
+
+
+```
+html:
+
+<div class="parent">
+	<div class="child"></div>
+</div>
+
+css:
+
+.parent{
+	position: relative;
+}
+
+.child{
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+}
+```
+
+```
+html:
+
+<div class="parent">
+	<div class="child"></div>
+</div>
+
+css:
+
+.parent{
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+```
+
 ### 手写代码
 
 ### 项目经验
