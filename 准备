@@ -1102,3 +1102,67 @@ var emitter = {
 
 }()
 ```
+
+### GPU 加速
+
+#### 1. 如何开启 GPU 加速
+
+**[1]** 3D 或者透视，transform，perspective
+
+**[2]** 使用加速视频解码的 Vedio
+
+**[3]** webgl 或者 canvas
+
+**[4]** flash 插件
+
+**[5]** 对 opacity、transform、fliter、backdropfilter 应用了 animation 或者 transition（需要是 active 的 animation 或者 transition，当 animation 或者 transition 效果未开始或结束后，提升合成层也会失效）
+
+**[6]** 拥有加速 CSS 过滤器（filter）的元素
+
+**[7]** 有 z-index 比自己低的合成层，导致自己也会提升成合成层
+
+**[8]** will-change 设置为 opacity、transform、top、left、bottom、right（其中 top、left 等需要设置明确的定位属性，如 relative 等）
+
+#### 2. 合成层的管理
+
+**[1]** 提高合成层的 z-index
+
+**[2]** 一个猜想，最小公约父合成层的使用，其子元素很多的话，可以使用常规的 top、left 变化，由于父元素提升成了合成层，因此子元素的变化不会影响到父元素同级元素的定位而引起页面回流
+
+### 简单双向绑定
+
+```
+<body>
+    <div id="app">
+        <input type="text" id="txt">
+        <p id="show-txt"></p>
+    </div>
+    <script>
+        var obj = {}
+        Object.defineProperty(obj, 'txt', {
+            get: function () {
+                return obj
+            },
+            set: function (newValue) {
+                document.getElementById('txt').value = newValue
+                document.getElementById('show-txt').innerHTML = newValue
+            }
+        })
+        document.addEventListener('keyup', function (e) {
+            obj.txt = e.target.value
+        })
+    </script>
+</body>
+```
+
+### CommonJS 中的 require/exports 和 ES6 中的 import/export 区别
+
+**[1]** 相同点都是输出可以看成为具有多个属性或者方法的对象
+
+**[2]** ES6 独有 default 这个关键字，输出默认的接口对象
+
+**[3]** require 是按需加载，ES6 是静态加载，编译时能确认模块关系
+
+**[4]** 目前而言，ES6 的 import/export 都会被 babel 处理成 require/exports
+
+**[5]** 前者有自己的命名空间，后者没有
