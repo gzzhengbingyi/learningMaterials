@@ -352,6 +352,47 @@ css:
 
 ### 响应式布局
 
+#### 1. 横竖屏判断
+
+```
+横屏
+
+@media screen and (orientation: landscape){
+}
+
+<link ref="stylesheet" media="all and (orientation: landscape)" href="xx.css">
+
+竖屏
+
+@media screen and (orientation: portrait){
+}
+
+<link ref="stylesheet" media="all and (orientation: portrait)" href="xx.css">
+
+window.addEventListener("onorientationchange" in window ? "orientationchange" : "resize", function(){
+	//横屏，根据和水平线的角度来区分
+	if(Math.abs(window.orientation) === 90){
+	
+	}
+	//竖屏
+	if(window.orientation === 180 || window.orientation === 0){
+	
+	}
+})
+```
+
+#### 2. 普通响应式写法
+
+```
+@media (max-width: 600px){
+}
+
+<link rel="stylesheet" media="(max-width: 600px)" href="xxx.css"/>
+
+@media tv and (min-width: 700px ) and (orientation: landscape){
+}
+```
+
 ### hybrid
 
 #### 1. JSBridge 的原理及实现
@@ -797,65 +838,78 @@ function resolvePromise(promise2, x, resolve, reject){
 	}
 }
 
-Promise.prototype.then = function(onResolved, onRejected){
-	var selt = this;
-	var promise2;
+Promise.prototype.then = function(onResolved, onRejected) {
+  var self = this
+  var promise2
 
-	onResolved = typeof onResolved === 'function' ? onResolved : function(value){return value};//解决值穿透问题
-	onRejected = typeof onRejected === 'function' ? onRejected : function(reason) {throw reason};
+  // 根据标准，如果then的参数不是function，则我们需要忽略它，此处以如下方式处理
+  onResolved = typeof onResolved === 'function' ? onResolved : function(value) {}
+  onRejected = typeof onRejected === 'function' ? onRejected : function(reason) {}
 
-	if(self.status === "resolved"){//前一个promise异步完成并调用resolve
-		return promise2 = new Promise(function(resolve, reject){
-			setTimeout(function(){
-				try{
-					var x = onResolved(self.data);
-					// if(x instanceof Promise){
-					// 	x.then(resolve, reject);
-					// }
-					// resolve(x);
-					resolvePromise(promise2, x, resolve, reject)
-				} catch(e){
-					rejecte(e)
-				}
-			})
-		})
-	}
+  if (self.status === 'resolved') {
+    // 如果promise1(此处即为this/self)的状态已经确定并且是resolved，我们调用onResolved
+    // 因为考虑到有可能throw，所以我们将其包在try/catch块里
+    return promise2 = new Promise(function(resolve, reject) {
+      try {
+        var x = onResolved(self.data)
+        if (x instanceof Promise) { // 如果onResolved的返回值是一个Promise对象，直接取它的结果做为promise2的结果
+          x.then(resolve, reject)
+        }
+        resolve(x) // 否则，以它的返回值做为promise2的结果
+      } catch (e) {
+        reject(e) // 如果出错，以捕获到的错误做为promise2的结果
+      }
+    })
+  }
 
-	if(self.status === "rejected"){//前一个promise异步完成并调用reject
-		return promise2 = new Promise(function(resolve, reject){
-			setTimeout(function(){
-				try{
-					var x = onRejected(self.data);
-					resolvePromise(promise2, x, resolve, reject)
-				} catch(e){
-					rejecte(e)
-				}
-			})
-		});
-	}
+  // 此处与前一个if块的逻辑几乎相同，区别在于所调用的是onRejected函数，就不再做过多解释
+  if (self.status === 'rejected') {
+    return promise2 = new Promise(function(resolve, reject) {
+      try {
+        var x = onRejected(self.data)
+        if (x instanceof Promise) {
+          x.then(resolve, reject)
+        }
+      } catch (e) {
+        reject(e)
+      }
+    })
+  }
 
-	if(self.status === "pending"){//假如前一个promise还没异步完
-		return promise2 = new Promise((function(resolve, reject){
-			//没有异步完成，所以处理可以push到前一个promise的回调函数里面
-			self.onResolvedCallback.push(function(value){
-				try{
-					var x = onResolved(self.data);
-					resolvePromise(promise2, x, resolve, reject)
-				} catch(e){
-					reject(e)
-				}
-			})
+  if (self.status === 'pending') {
+  // 如果当前的Promise还处于pending状态，我们并不能确定调用onResolved还是onRejected，
+  // 只能等到Promise的状态确定后，才能确实如何处理。
+  // 所以我们需要把我们的**两种情况**的处理逻辑做为callback放入promise1(此处即this/self)的回调数组里
+  // 逻辑本身跟第一个if块内的几乎一致，此处不做过多解释
+    return promise2 = new Promise(function(resolve, reject) {
+      self.onResolvedCallback.push(function(value) {
+        try {
+          var x = onResolved(self.data)
+          if (x instanceof Promise) {
+            x.then(resolve, reject)
+          }
+        } catch (e) {
+          reject(e)
+        }
+      })
 
-			self.onRejectedCallback.push(function(value){
-				try{
-					var x = onRejected(self.data);
-					resolvePromise(promise2, x, resolve, reject)
-				} catch(e){
-					reject(e)
-				}
-			})
-		}))
-	}
+      self.onRejectedCallback.push(function(reason) {
+        try {
+          var x = onRejected(self.data)
+          if (x instanceof Promise) {
+            x.then(resolve, reject)
+          }
+        } catch (e) {
+          reject(e)
+        }
+      })
+    })
+  }
+}
+
+// 为了下文方便，我们顺便实现一个catch方法
+Promise.prototype.catch = function(onRejected) {
+  return this.then(null, onRejected)
 }
 
 Promise.prototype.catch = function(onRejected){
@@ -1166,3 +1220,25 @@ var emitter = {
 **[4]** 目前而言，ES6 的 import/export 都会被 babel 处理成 require/exports
 
 **[5]** 前者有自己的命名空间，后者没有
+
+### 项目亮点
+
+#### 1.通信录功能
+
+企业易信通信录初始时候，采用的是类网易体系的通信录规则，也就是组织架构信息透明。后面企业用户反馈，希望提供带权限的通信录功能。
+
+**[1]** 功能介绍
+
+通信录分为两种，一种是网易的权限全透明，一种是只能看到管理员设置权限后的组织。后者逻辑分为：
+
+1、子级可见权限继承成自父级部门，子级是子部门以及直属员工的统称
+
+2、同级子级可以设置只允许部分兄弟子级可见、只对部分兄弟子级不可见以及只对自己子级可见
+
+3、一个员工可以处于多个部门，其权限进行合并后处理，权限有冲突的话，有权限优先级更高。例如员工小明属于A部门下的某部门，也属于B部门的某部门，B部门不允许A部门成员能看到自己，但是小明由于也在B部门，因此AB两个部门都有权限。
+
+**[2]** 技术实现
+
+1、后端提供三个接口，分别是拍平后的组织架构信息、员工详细内容以及员工备注名。三个接口数据都获取后才能进行树结构生成
+
+2、
