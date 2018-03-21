@@ -1241,4 +1241,55 @@ var emitter = {
 
 1、后端提供三个接口，分别是拍平后的组织架构信息、员工详细内容以及员工备注名。三个接口数据都获取后才能进行树结构生成
 
-2、
+2、做了双向链表处理，当成员离开群的时候，就能快速定位到父节点，对应处理
+
+3、通讯录数据很大，每次计算都是大笔的开销，因此有必要进行缓存，放进 indexDB 里面
+
+#### 1. 移动端兼容性 —— 原生 select 默认不选的处理
+
+**[1]** 使用原生的理由：一、时间有限，组件模拟不是很好的主意 二、原生的控件其实挺不错。然而，需求里面有 select 默认不选的情况，要用户手动 select 之后才能提交请求
+
+**[2]** 安卓使用 ```select.selectedIndex = -1``` 可以实现该需求，但是 IOS 却失败了。即使使用节点隐藏 select 的默认值（第一项），用户实际是能提交的，因为有值了。假如增加一项提示进 option，会多了一项无意义的 option 项目，也是不可行。
+
+**[3]** 使用遮罩隐藏选项，设置 CSS 项 ```pointer-events:none;``` 来实现点透，从而可以操作下面的 select 。在 select 上面监控 onBlur 事件，触发后设置 selected 开关为 true 表示已经选择了可以提交，并且隐藏遮罩。
+
+#### 2. 移动端兼容性 —— requestAnimationFrame 的问题
+
+**[1]** requestAnimationFrame 是浏览器将要渲染时候的钩子函数，比 setTimeout 优势的地方在于知道何时要渲染。然而在移动端，由于机器性能，特别是低端安卓手机，requestAnimationFrame 的帧率并没有达到 60 FPS，还是会出现卡顿。
+
+**[2]** 这个时候为了保证动画比较流畅进行，要使用 setTimeout 进行弥补。setTimeout 的延时设置为 60 FPS。假如 requestAnimationFrame 能顺利运行，就清掉 setTimeout 然后再设置新的 setTimeout，否则运行 setTimeout，然后设置开关值让 requestAnimationFrame 不运行主逻辑后再关掉开关，继续 requestAnimationFrame。 
+
+#### 3. postion: sticky 的兼容性
+
+**[1]** 在安卓上不支持的时候，使用 throttle 来包装 scroll 事件运行的逻辑
+
+```
+function throttle(func, wait){
+	  var wait = wait || 100;
+	  var context, args, result;
+	  var timeout = null;
+	  var previous = 0;
+	  var later = function() {
+	    previous = +new Date;
+	    timeout = null;
+	    result = func.apply(context, args);
+	    context = args = null;
+	  };
+	  return function() {
+	    var now = + new Date;
+	    var remaining = wait - (now - previous);
+	    context = this;
+	    args = arguments;
+	    if (remaining <= 0 || remaining > wait) {
+	      clearTimeout(timeout);
+	      timeout = null;
+	      previous = now;
+	      result = func.apply(context, args);
+	      context = args = null;
+	    } else if (!timeout) {
+	      timeout = setTimeout(later, remaining);
+	    }
+	    return result;
+	 };
+};
+```
