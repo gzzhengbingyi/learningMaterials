@@ -791,53 +791,6 @@ unction Promise(executor){
 	}
 }
 
-//resolvePromise函数即为根据x的值来决定promise2的状态的函数
-function resolvePromise(promise2, x, resolve, reject){
-	var then
-	var thenCalledOrThrow = false;
-
-	if(promise2 === x){
-		return rejecte(new TypeError('Chaining cycle detected for promise!'))
-	}
-
-	if(x instanceof Promise){
-		if(x.status === 'pending'){
-			x.then(function(v){
-				resolvePromise(promise2, v, resolve, reject)
-			}, reject)
-		} else{
-			x.then(resolve, reject)
-		}
-		return
-	}
-
-	//不同实现的promise也可以保证能够互相调用
-	if((x !=== null) && ((typeof x === "object") || typeof x === "function")){
-		try{
-			then = x.then;
-			if(typeof then === "function"){
-				then.call(x, function rs(y){
-					if(thenCalledOrThrow) return
-					thenCalledOrThrow = true
-					return resolvePromise(promise2, y, resolve, reject)
-				}, function rj(r){
-					if(thenCalledOrThrow) return
-					thenCalledOrThrow = true
-					return reject(r)
-				})
-			} else{
-				resolve(x)
-			}
-		} catch(e){
-			if(thenCalledOrThrow) return
-			thenCalledOrThrow = true
-			return reject(e)
-		}
-	} else{
-		resolve(x)
-	}
-}
-
 Promise.prototype.then = function(onResolved, onRejected) {
   var self = this
   var promise2
